@@ -1,9 +1,11 @@
 
-function App()  {
+import React from 'react';
+import LoginPage from './pages/auth/LoginPage.jsx';
+
+function App() {
   return (
-    <>
-    <h1>Hello </h1>
-    </>
-  )
+    <LoginPage />
+  );
 }
-export default App;
+
+export default App;
