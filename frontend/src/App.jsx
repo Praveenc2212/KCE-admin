@@ -1,5 +1,4 @@
 
-import React from 'react';
 import LoginPage from './pages/auth/LoginPage.jsx';
 
 function App() {
@@ -8,4 +7,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;
