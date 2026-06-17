@@ -1,8 +1,6 @@
-
 import { useState } from "react";
 
-function StudentForm() {
-
+const StudentForm = () => {
   const initialForm = {
     name: "",
     rollNo: "",
@@ -47,22 +45,20 @@ function StudentForm() {
     setStudents(students.filter((_, i) => i !== index));
   };
 
+  return (
+    <div className="min-h-screen bg-[#f8f3ee] p-6">
+      
 
+      {/* Form Table */}
+      <div className="overflow-x-auto mt-10">
+        <div className="flex justify-between items-center mb-4 mt-10">
+        <h2 className="text-4xl md:text-2xl font-bold text-[#ff6b00] ml-54 ">Student Form</h2>
 
-    return (
-  <div className="min-h-screen bg-[#f8f3ee] p-6">
+      </div>
 
-    {/* Header */}
-    <div className="max-w-7xl mx-auto mb-8">
-      <h1 className="text-3xl font-bold text-[#ff6b00]">
-        Student Form
-      </h1>
-    </div>
-
-    {/* Form */}
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mb-10">
-        <h2 className="text-3xl font-bold text-center text-[#ff6b00] mb-8">
-          {editIndex !== null ? "Update Student" : "Add Student"}
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-auto p-6 ml-84 ">
+        <h2 className="text-2xl font-bold text-center text-orange-600 mb-8">
+          Add Student
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -148,92 +144,93 @@ function StudentForm() {
             onChange={handleChange}
             className="h-11 px-4 border border-orange-200 rounded-lg"
           >
-            <option value="">Select Type</option>
-            <option>Hosteller</option>
-            <option>Dayscholar</option>
+            <option value="" >Select Student Type</option>
+            <option>H</option>
+            <option>D</option>
           </select>
-
         </div>
 
         <div className="flex justify-center gap-4 mt-8">
           <button
             onClick={handleSubmit}
-            className="bg-[#ff6b00] hover:bg-orange-700 text-white px-8 py-2 rounded-lg"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-lg"
           >
-            {editIndex !== null ? "Update" : "Submit"}
+            {editIndex !== null ? "Update" : "Add"}
           </button>
 
           <button
-            onClick={() => {
-              setFormData(initialForm);
-              setEditIndex(null);
-            }}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-2 rounded-lg"
+            onClick={() => setFormData(initialForm)}
+            className="bg-red-500 hover:bg-red-600 text-white px-8 py-2 rounded-lg"
           >
             Cancel
           </button>
         </div>
       </div>
 
-    {/* Student List */}
-    <div className="max-w-7xl mx-auto">
-      <h2 className="text-3xl font-bold text-[#ff6b00] mb-6">
-        Student List
-      </h2>
 
-      <table className="w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-300">
-        <thead className="bg-orange-200">
-          <tr>
-            <th className="border p-3">S.No</th>
-            <th className="border p-3">Name</th>
-            <th className="border p-3">Roll No</th>
-            <th className="border p-3">Gender</th>
-            <th className="border p-3">Email</th>
-            <th className="border p-3">Dept</th>
-            <th className="border p-3">Year</th>
-            <th className="border p-3">Sec</th>
-            <th className="border p-3">Type</th>
-            <th className="border p-3">Edit</th>
-            <th className="border p-3">Remove</th>
-          </tr>
-        </thead>
 
-        <tbody>
-          {students.map((student, index) => (
-            <tr key={index}>
-              <td className="border p-2 text-center">{index + 1}</td>
-              <td className="border p-2">{student.name}</td>
-              <td className="border p-2">{student.rollNo}</td>
-              <td className="border p-2">{student.gender}</td>
-              <td className="border p-2">{student.email}</td>
-              <td className="border p-2">{student.dept}</td>
-              <td className="border p-2">{student.year}</td>
-              <td className="border p-2">{student.sec}</td>
-              <td className="border p-2">{student.studentType}</td>
+      </div>
 
-              <td className="border p-2 text-center">
-                <button
-                  onClick={() => handleEdit(index)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                >
-                  Edit
-                </button>
-              </td>
+      
 
-              <td className="border p-2 text-center">
-                <button
-                  onClick={() => handleDelete(index)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                >
-                  Remove
-                </button>
-              </td>
+      {/* Student List */}
+      <h2 className="text-2xl font-bold text-[#ff6b00] mb-8 mt-10 ml-54">Student List</h2>
+
+      <div className="overflow-x-auto">
+        <table className="w-300 border border-gray-300 ml-54">
+          <thead className="bg-orange-200">
+            <tr>
+              <th className="border p-2 w-10">S.No</th>
+              <th className="border p-2 w-25">Name</th>
+              <th className="border p-2 w-20">Roll No</th>
+              <th className="border p-2 w-15">Gender</th>
+              <th className="border p-2 w-25">Email</th>
+              <th className="border p-2 w-10">Dept</th>
+              <th className="border p-2 w-10">Year</th>
+              <th className="border p-2 w-10">Sec</th>
+              <th className="border p-2 w-10">Type</th>
+              <th className="border p-2 w-10">Edit</th>
+              <th className="border p-2 w-10">Remove</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {students.map((student, index) => (
+              <tr key={index}>
+                <td className="border p-2">{index + 1}</td>
+                <td className="border p-2">{student.name}</td>
+                <td className="border p-2">{student.rollNo}</td>
+                <td className="border p-2">{student.gender}</td>
+                <td className="border p-2">{student.email}</td>
+                <td className="border p-2">{student.dept}</td>
+                <td className="border p-2">{student.year}</td>
+                <td className="border p-2">{student.sec}</td>
+                <td className="border p-2">{student.studentType}</td>
+
+                <td className="border p-2">
+                  <button
+                    onClick={() => handleEdit(index)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+                </td>
+
+                <td className="border p-2">
+                  <button
+                    onClick={() => handleDelete(index)}
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-);
-}
+  );
+};
+
 export default StudentForm;
