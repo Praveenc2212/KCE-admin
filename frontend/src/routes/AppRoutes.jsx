@@ -2,7 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/auth/LoginPage';
 import AdminLayout from '../layouts/AdminLayout';
-import InsertStudentPage from '../pages/students/InsertStudentPage';
+import StudentForm  from '../components/forms/StudentForm';
+import StaffForm  from '../components/forms/StaffForm';
 
 const AppRoutes = () => {
   return (
@@ -14,11 +15,11 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<div className="bg-white p-6 rounded-lg shadow border border-orange-100"><h2 className="text-xl font-bold text-orange-600">Dashboard</h2><p className="mt-2 text-gray-600">Welcome to Admin Dashboard</p></div>} />
         
         {/* Student Routes */}
-        <Route path="/student/add" element={<InsertStudentPage />} />
+        <Route path="/student/add" element={ <StudentForm /> } />
         <Route path="/student/manage" element={<div className="bg-white p-6 rounded-lg shadow border border-orange-100"><h2 className="text-xl font-bold text-orange-600">Manage Students</h2><p className="mt-2 text-gray-600">Student list will appear here.</p></div>} />
         
         {/* Staff Routes */}
-        <Route path="/staff/add" element={<div className="bg-white p-6 rounded-lg shadow border border-orange-100"><h2 className="text-xl font-bold text-orange-600">Add Staff</h2><p className="mt-2 text-gray-600">Form to add staff will appear here.</p></div>} />
+        <Route path="/staff/add" element={<StaffForm /> } />
         <Route path="/staff/manage" element={<div className="bg-white p-6 rounded-lg shadow border border-orange-100"><h2 className="text-xl font-bold text-orange-600">Manage Staff</h2><p className="mt-2 text-gray-600">Staff list will appear here.</p></div>} />
         
         {/* Security Routes */}
