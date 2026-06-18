@@ -69,7 +69,6 @@ app.use(errorHandler);
 const PORT = process.env.SERVER_PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(
-    `[Server] Running in ${process.env.STATUS || "development"} mode on port ${PORT}`
-  );
+  console.log(`
+  🚀 Server running at http://localhost:${PORT}`);
 });
