@@ -1,0 +1,27 @@
+import mongoose from "mongoose";
+
+export const ClassSchema = new mongoose.Schema({
+  tutorIds: [
+    {
+      // required is intentionally omitted: classes are created without tutors.
+      // Tutors are assigned later via the Class Module (PUT /api/class/:id).
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Faculty",
+    },
+  ],
+  department: {
+    type: String,
+    required: true,
+  },
+  year: {
+    type: String,
+    required: true,
+  },
+  section: {
+    type: String,
+    required: true,
+  },
+});
+
+export const ClassModel = mongoose.model("Class", ClassSchema);
+
