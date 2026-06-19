@@ -1,0 +1,13 @@
+{
+  "watch": [
+    "index.js",
+    "server",
+    ".env"
+  ],
+  "ext": "js",
+  "exec": "node index.js",
+  "ignore": [
+    "node_modules/"
+  ],
+  "delay": 2000
+}
