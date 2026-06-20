@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import useAuthStore from '../../store/authStore';
 import { 
   LayoutDashboard, 
   Users, 
@@ -15,10 +16,16 @@ import {
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const { logout } = useAuthStore();
 
-  const handleLogout = () => {
-    // Perform logout logic here
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      navigate('/');
+    }
   };
 
   return (

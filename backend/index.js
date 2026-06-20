@@ -17,7 +17,7 @@ import classRouter from "./server/routers/class.route.js";
 
 const mongoUrl =
   process.env.STATUS === "development"
-    ? process.env.MONGO_DB_URL_LOCAL
+    ? process.env.MONGO_DB_URL
     : process.env.MONGO_DB_URL;
 
 DB.connect(mongoUrl);

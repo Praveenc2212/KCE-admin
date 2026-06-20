@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Loader, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/common/Header';
+import useAuthStore from '../../store/authStore';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('root@kce.ac.in');
-  const [password, setPassword] = useState('123456');
-  const [rememberMe, setRememberMe] = useState(false);
+  const { login, isLoading } = useAuthStore();
+  
+  const [username, setUsername] = useState('admin@kce.ac.in');
+  const [password, setPassword] = useState('admin@kce');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Validation error states
   const [errors, setErrors] = useState({
@@ -50,31 +51,29 @@ function LoginPage() {
     return isValid;
   };
 
-  // Login Handler (Simulates API latency & logs credentials)
+  // Login Handler
   const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay of 1.5 seconds
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      if (username === 'root@kce.ac.in' && password === '123456') {
+      const response = await login(username, password);
+      
+      if (response && response.success) {
         navigate('/dashboard');
       } else {
         setErrors((prev) => ({
           ...prev,
-          password: 'Invalid username or password'
+          password: response?.message || 'Invalid username or password'
         }));
       }
-
     } catch (error) {
       console.error('Login failed:', error);
-    } finally {
-      setIsLoading(false);
+      setErrors((prev) => ({
+        ...prev,
+        password: error.response?.data?.message || error.message || 'An error occurred during login'
+      }));
     }
   };
 
