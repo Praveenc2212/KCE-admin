@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useFacultyStore from "../../store/facultyStore";
 
 const StaffForm = () => {
   const initialForm = {
@@ -11,8 +12,10 @@ const StaffForm = () => {
   };
 
   const [formData, setFormData] = useState(initialForm);
-  const [staffs, setStaffs] = useState([]);
+  const [localStaffs, setLocalStaffs] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+
+  const { bulkCreateFaculties, isLoading, error } = useFacultyStore();
 
   const handleChange = (e) => {
     setFormData({
@@ -21,26 +24,60 @@ const StaffForm = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleAddOrUpdateLocal = () => {
     if (editIndex !== null) {
-      const updated = [...staffs];
+      const updated = [...localStaffs];
       updated[editIndex] = formData;
-      setStaffs(updated);
+      setLocalStaffs(updated);
       setEditIndex(null);
     } else {
-      setStaffs([...staffs, formData]);
+      setLocalStaffs([...localStaffs, formData]);
     }
 
     setFormData(initialForm);
   };
 
-  const handleEdit = (index) => {
-    setFormData(staffs[index]);
+  const handleEditLocal = (index) => {
+    setFormData(localStaffs[index]);
     setEditIndex(index);
   };
 
-  const handleDelete = (index) => {
-    setStaffs(staffs.filter((_, i) => i !== index));
+  const handleDeleteLocal = (index) => {
+    setLocalStaffs(localStaffs.filter((_, i) => i !== index));
+  };
+
+  const handleSaveAllToDatabase = async () => {
+    if (localStaffs.length === 0) {
+      alert("No staff to add. Please add some staff first.");
+      return;
+    }
+
+    const formattedStaffs = localStaffs.map(staff => ({
+      staffId: staff.staffid,
+      name: staff.name,
+      email: staff.email,
+      dateOfBirth: staff.dob ? staff.dob.split('-').reverse().join('/') : '', // Format YYYY-MM-DD to DD/MM/YYYY
+      department: staff.dept,
+      designation: staff.des
+    }));
+
+    try {
+      const response = await bulkCreateFaculties({ faculties: formattedStaffs });
+      if (response && response.success) {
+        const stats = response.data;
+        if (stats.failed > 0 || stats.duplicates > 0) {
+          const failReasons = stats.failedRecords.map(r => `${r.staffId || 'Unknown'}: ${r.reason}`).join("\n");
+          alert(`Import complete: ${stats.inserted} added. ${stats.failed} failed. ${stats.duplicates} duplicates.\n\nReasons:\n${failReasons}\n\nPlease check console for details.`);
+          console.error("Failed records:", stats.failedRecords);
+          console.error("Duplicate records:", stats.duplicateRecords);
+        } else {
+          alert("All staff added successfully!");
+          setLocalStaffs([]);
+        }
+      }
+    } catch (err) {
+      alert(err.message || "Failed to save staff to database.");
+    }
   };
 
   return (
@@ -106,6 +143,7 @@ const StaffForm = () => {
             name="dob"
             value={formData.dob}
             onChange={handleChange}
+            placeholder="DOB (DD/MM/YYYY)"
             className="h-11 px-4 border border-orange-200 rounded-lg"
           />
 
@@ -131,10 +169,11 @@ const StaffForm = () => {
             className="h-11 px-4 border border-orange-200 rounded-lg"
           >
             <option value="">Select Designation</option>
-            <option>Staff</option>
-            <option>HOD</option>
-            <option>Principal</option>
-            <option>Technician</option>
+            <option value="STAFF">Staff</option>
+            <option value="HOD">HOD</option>
+            <option value="ADMIN">Admin</option>
+            <option value="PRINCIPLE">Principal</option>
+            <option value="SECURITY">Security</option>
           </select>
 
           
@@ -144,7 +183,7 @@ const StaffForm = () => {
 
         <div className="flex justify-center gap-4 mt-8">
           <button
-            onClick={handleSubmit}
+            onClick={handleAddOrUpdateLocal}
             className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-lg"
           >
             {editIndex !== null ? "Update" : "Add"}
@@ -166,7 +205,16 @@ const StaffForm = () => {
       
 
       {/* Staff List */}
-      <h2 className="text-2xl font-bold text-[#ff6b00] mb-8 mt-10 ml-54">Staff List</h2>
+      <div className="flex justify-between items-center ml-54 mt-10 mb-8 max-w-[calc(100%-250px)]">
+        <h2 className="text-2xl font-bold text-[#ff6b00]">Staff to be Added ({localStaffs.length})</h2>
+        <button
+          onClick={handleSaveAllToDatabase}
+          disabled={isLoading || localStaffs.length === 0}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50"
+        >
+          {isLoading ? "Saving to Database..." : "Save All to Database"}
+        </button>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-300 border border-gray-300 ml-54">
@@ -185,35 +233,43 @@ const StaffForm = () => {
           </thead>
 
           <tbody>
-            {staffs.map((staff, index) => (
-              <tr key={index}>
-                <td className="border p-2 text-center">{index + 1}</td>
-                <td className="border p-2 text-center">{staff.staffid}</td>
-                <td className="border p-2 text-center">{staff.name}</td>
-                <td className="border p-2 text-center">{staff.email}</td>
-                <td className="border p-2 text-center">{staff.dob}</td>
-                <td className="border p-2 text-center">{staff.dept}</td>
-                <td className="border p-2 text-center">{staff.des}</td>
-
-                <td className="border p-2">
-                  <button
-                    onClick={() => handleEdit(index)}
-                    className="bg-yellow-500 text-white px-3 py-1 rounded"
-                  >
-                    Edit
-                  </button>
-                </td>
-
-                <td className="border p-2">
-                  <button
-                    onClick={() => handleDelete(index)}
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                  >
-                    Remove
-                  </button>
+            {localStaffs.length === 0 ? (
+              <tr>
+                <td colSpan="9" className="text-center p-4 text-gray-500">
+                  No staff added to the list yet.
                 </td>
               </tr>
-            ))}
+            ) : (
+              localStaffs.map((staff, index) => (
+                <tr key={index}>
+                  <td className="border p-2 text-center">{index + 1}</td>
+                  <td className="border p-2 text-center">{staff.staffid}</td>
+                  <td className="border p-2 text-center">{staff.name}</td>
+                  <td className="border p-2 text-center">{staff.email}</td>
+                  <td className="border p-2 text-center">{staff.dob}</td>
+                  <td className="border p-2 text-center">{staff.dept}</td>
+                  <td className="border p-2 text-center">{staff.des}</td>
+
+                  <td className="border p-2">
+                    <button
+                      onClick={() => handleEditLocal(index)}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+                  </td>
+
+                  <td className="border p-2">
+                    <button
+                      onClick={() => handleDeleteLocal(index)}
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

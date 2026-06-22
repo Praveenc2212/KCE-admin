@@ -46,9 +46,8 @@ const Sidebar = () => {
           <div className="pt-4 pb-2 px-3 text-xs font-bold text-orange-400 uppercase tracking-wider">
             Administration
           </div>
-          <NavItem to="/department" icon={<Building2 size={20} />} label="Department" />
           <NavItem to="/security/manage" icon={<ShieldCheck size={20} />} label="Security" />
-          <NavItem to="/tutor" icon={<GraduationCap size={20} />} label="Tutor" />
+          <NavItem to="/class/manage" icon={<GraduationCap size={20} />} label="Classes" />
           <NavItem to="/hod" icon={<UserCheck size={20} />} label="HOD" />
         </nav>
       </div>
