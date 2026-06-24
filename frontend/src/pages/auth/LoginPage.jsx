@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Loader, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/common/Header';
+import useAuthStore from '../../store/authStore';
 
 function LoginPage() {
-  const [username, setUsername] = useState('@kce.ac.in');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login, isLoading } = useAuthStore();
   
+  const [username, setUsername] = useState('admin@kce.ac.in');
+  const [password, setPassword] = useState('admin@kce');
+  const [showPassword, setShowPassword] = useState(false);
+
   // Validation error states
   const [errors, setErrors] = useState({
     username: '',
@@ -28,7 +32,6 @@ function LoginPage() {
       setErrors((prev) => ({ ...prev, password: '' }));
     }
   };
-
   // Basic Form Validation
   const validateForm = () => {
     let isValid = true;
@@ -48,33 +51,29 @@ function LoginPage() {
     return isValid;
   };
 
-  // Login Handler (Simulates API latency & logs credentials)
+  // Login Handler
   const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay of 1.5 seconds
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Console log for credentials (temporary, for future JWT Spring Boot integration)
-      console.log('Login credentials submitted:', {
-        username,
-        password,
-        rememberMe,
-      });
-
-      // API Integration Point:
-      // const response = await authService.login({ username, password });
-      // handleJwtToken(response.token);
-
+      const response = await login(username, password);
+      
+      if (response && response.success) {
+        navigate('/dashboard');
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          password: response?.message || 'Invalid username or password'
+        }));
+      }
     } catch (error) {
       console.error('Login failed:', error);
-    } finally {
-      setIsLoading(false);
+      setErrors((prev) => ({
+        ...prev,
+        password: error.response?.data?.message || error.message || 'An error occurred during login'
+      }));
     }
   };
 
@@ -83,11 +82,12 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] flex flex-col justify-between font-sans text-gray-800 antialiased">
+      <Header />
 
       {/* Main Login Form Card Area */}
       <main className="flex-grow flex items-center justify-center py-10 px-4">
         <div className="w-full max-w-[440px] bg-white rounded-3xl shadow-[0_15px_50px_rgba(0,0,0,0.04)] border border-gray-100/50 p-8 sm:p-12 flex flex-col items-center">
-          
+
           {/* Circular Profile Icon */}
           <div className="w-20 h-20 rounded-full bg-[#ffebd9] flex items-center justify-center mb-6">
             <User className="w-9 h-9 text-[#ea580c]" />
@@ -108,11 +108,10 @@ function LoginPage() {
                 value={username}
                 onChange={handleUsernameChange}
                 placeholder="@kce.ac.in"
-                className={`w-full px-4 py-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#ea580c] transition-all duration-200 text-gray-900 placeholder-gray-400 text-base ${
-                  errors.username 
-                    ? 'border-red-500 focus:border-red-500' 
+                className={`w-full px-4 py-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#ea580c] transition-all duration-200 text-gray-900 placeholder-gray-400 text-base ${errors.username
+                    ? 'border-red-500 focus:border-red-500'
                     : 'border-orange-200 focus:border-orange-500'
-                }`}
+                  }`}
               />
               {errors.username && (
                 <p className="text-xs text-red-500 pl-1 font-medium">{errors.username}</p>
@@ -130,11 +129,10 @@ function LoginPage() {
                   value={password}
                   onChange={handlePasswordChange}
                   placeholder="......"
-                  className={`w-full pl-4 pr-12 py-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#ea580c] transition-all duration-200 text-gray-900 placeholder-gray-400 text-base ${
-                    errors.password 
-                      ? 'border-red-500 focus:border-red-500' 
+                  className={`w-full pl-4 pr-12 py-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-[#ea580c] transition-all duration-200 text-gray-900 placeholder-gray-400 text-base ${errors.password
+                      ? 'border-red-500 focus:border-red-500'
                       : 'border-orange-200 focus:border-orange-500'
-                  }`}
+                    }`}
                 />
                 <button
                   type="button"
@@ -155,11 +153,10 @@ function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-3.5 px-4 font-semibold text-[#ea580c] rounded-lg bg-[#ffebd9] transition-all duration-200 flex items-center justify-center gap-2 select-none border border-transparent cursor-pointer ${
-                  isLoading
+                className={`w-full py-3.5 px-4 font-semibold text-[#ea580c] rounded-lg bg-[#ffebd9] transition-all duration-200 flex items-center justify-center gap-2 select-none border border-transparent cursor-pointer ${isLoading
                     ? 'opacity-60 cursor-not-allowed shadow-none'
                     : 'hover:bg-[#ffd1b3] hover:text-[#c2410c] hover:shadow-[0_4px_15px_rgba(234,88,12,0.08)] active:bg-[#ffbe94]'
-                }`}
+                  }`}
               >
                 {isLoading ? (
                   <>
