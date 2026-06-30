@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 const StudentForm = () => {
   const initialForm = {
@@ -6,6 +8,7 @@ const StudentForm = () => {
     rollNo: "",
     gender: "",
     email: "",
+    dob: "",
     dept: "",
     year: "",
     sec: "",
@@ -13,8 +16,45 @@ const StudentForm = () => {
   };
 
   const [formData, setFormData] = useState(initialForm);
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState(
+  JSON.parse(localStorage.getItem("workingStudents")) || []
+);
   const [editIndex, setEditIndex] = useState(null);
+  const fileInputRef = useRef(null);
+
+
+  const navigate = useNavigate();
+
+  const saveStudents = (updatedStudents) => {
+  setStudents(updatedStudents);
+
+  localStorage.setItem(
+    "workingStudents",
+    JSON.stringify(updatedStudents)
+    );
+  };
+
+  const saveFinalStudents = (updatedStudents) => {
+  localStorage.setItem(
+    "finalStudents",
+    JSON.stringify(updatedStudents)
+    );
+  };
+
+    useEffect(() => {
+      const index = localStorage.getItem("editStudentIndex");
+
+      if (index !== null) {
+        const allStudents =
+          JSON.parse(localStorage.getItem("workingStudents")) || [];
+
+        if (allStudents[index]) {
+          setFormData(allStudents[index]);
+          setEditIndex(Number(index));
+        }
+      }
+    }, []);
+
 
   const handleChange = (e) => {
     setFormData({
@@ -24,26 +64,97 @@ const StudentForm = () => {
   };
 
   const handleSubmit = () => {
-    if (editIndex !== null) {
-      const updated = [...students];
-      updated[editIndex] = formData;
-      setStudents(updated);
-      setEditIndex(null);
-    } else {
-      setStudents([...students, formData]);
-    }
+  let updatedStudents;
 
-    setFormData(initialForm);
+  if (editIndex !== null) {
+    updatedStudents = [...students];
+
+    updatedStudents[editIndex] = formData;
+
+    localStorage.removeItem("editStudentIndex");
+
+    setEditIndex(null);
+  } else {
+    updatedStudents = [...students, formData];
+  }
+
+  saveStudents(updatedStudents);
+
+  setFormData(initialForm);
+
   };
 
   const handleEdit = (index) => {
-    setFormData(students[index]);
-    setEditIndex(index);
+  localStorage.setItem(
+    "editStudentIndex",
+    index
+  );
+
+  setFormData(students[index]);
+  setEditIndex(index);
   };
 
   const handleDelete = (index) => {
-    setStudents(students.filter((_, i) => i !== index));
+  const updatedStudents = students.filter(
+    (_, i) => i !== index
+  );
+
+  saveStudents(updatedStudents);
   };
+
+  const handleAddAll = () => {
+  saveFinalStudents(students);
+
+  alert("All Students Added Successfully");
+  };
+
+  const handleExcelUpload = (e) => {
+    console.log("File selected:");
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = (evt) => {
+    const data = evt.target.result;
+
+    const workbook = XLSX.read(data, {
+      type: "binary",
+    });
+
+    const sheetName = workbook.SheetNames[0];
+
+    const worksheet = workbook.Sheets[sheetName];
+
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+    const formattedData = jsonData.map((row) => ({
+      name: row.Name || "",
+      rollNo: row.RollNo || "",
+      gender: row.Gender || "",
+      email: row.Email || "",
+       dob:
+    typeof row.DOB === "number"
+      ? XLSX.SSF.format("dd-mm-yyyy", row.DOB)
+      : row.DOB || "",
+      dept: row.Dept || "",
+      year: row.Year || "",
+      sec: row.Sec || "",
+      studentType: row.StudentType || "",
+    }));
+
+    const updatedStudents = [
+  ...students,
+  ...formattedData,
+];
+
+saveStudents(updatedStudents);
+alert("Students imported successfully");
+  };
+
+  reader.readAsBinaryString(file);
+};
 
   return (
     <div className="min-h-screen bg-[#f8f3ee] p-6">
@@ -62,92 +173,147 @@ const StudentForm = () => {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+          
+          <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Student Name
+          </label>
           <input
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Student Name"
-            className="h-11 px-4 border border-orange-200 rounded-lg"
+            placeholder="Enter Student Name"
+            className="h-11 w-full px-4 border border-orange-200 rounded-lg"
           />
+        </div>
 
+          <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Roll Number
+          </label>
           <input
             name="rollNo"
             value={formData.rollNo}
             onChange={handleChange}
-            placeholder="Roll Number"
-            className="h-11 px-4 border border-orange-200 rounded-lg"
+            placeholder="Enter Roll Number"
+            className="h-11 w-full px-4 border border-orange-200 rounded-lg"
           />
+        </div>
 
+          <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Gender
+          </label>
           <select
             name="gender"
             value={formData.gender}
             onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
+            className="h-11 w-full px-4 border border-orange-200 rounded-lg"
           >
             <option value="">Select Gender</option>
             <option>M</option>
             <option>F</option>
           </select>
+        </div>
 
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter Email"
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            />
+          </div>
 
-          <select
-            name="dept"
-            value={formData.dept}
-            onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          >
-            <option value="">Select Department</option>
-            <option>CSE</option>
-            <option>IT</option>
-            <option>EEE</option>
-            <option>MECH</option>
-            <option>CIVIL</option>
-          </select>
 
-          <select
-            name="year"
-            value={formData.year}
-            onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          >
-            <option value="">Select Year</option>
-            <option>I</option>
-            <option>II</option>
-            <option>III</option>
-            <option>IV</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date of Birth
+            </label>
+            <input
+              type="date"
+              name="dob"
+              value={formData.dob}
+              onChange={handleChange}
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            />
+          </div>
 
-          <select
-            name="sec"
-            value={formData.sec}
-            onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          >
-            <option value="">Select Section</option>
-            <option>A</option>
-            <option>B</option>
-            <option>C</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Department
+            </label>
+            <select
+              name="dept"
+              value={formData.dept}
+              onChange={handleChange}
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            >
+              <option value="">Select Department</option>
+              <option>CSE</option>
+              <option>IT</option>
+              <option>EEE</option>
+              <option>MECH</option>
+              <option>CIVIL</option>
+            </select>
+          </div>
 
-          <select
-            name="studentType"
-            value={formData.studentType}
-            onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          >
-            <option value="" >Select Student Type</option>
-            <option>H</option>
-            <option>D</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Year
+            </label>
+            <select
+              name="year"
+              value={formData.year}
+              onChange={handleChange}
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            >
+              <option value="">Select Year</option>
+              <option>I</option>
+              <option>II</option>
+              <option>III</option>
+              <option>IV</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Section
+            </label>
+            <select
+              name="sec"
+              value={formData.sec}
+              onChange={handleChange}
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            >
+              <option value="">Select Section</option>
+              <option>A</option>
+              <option>B</option>
+              <option>C</option>
+            </select>
+          </div>
+
+
+          <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Student Type
+              </label>
+              <select
+                name="studentType"
+                value={formData.studentType}
+                onChange={handleChange}
+                className="h-11 w-212 px-4 border border-orange-200 rounded-lg "
+              >
+                <option value="">Select Student Type</option>
+                <option>H</option>
+                <option>D</option>
+              </select>
+            </div>
         </div>
 
         <div className="flex justify-center gap-4 mt-8">
@@ -158,12 +324,39 @@ const StudentForm = () => {
             {editIndex !== null ? "Update" : "Add"}
           </button>
 
+           <button
+            onClick={() => fileInputRef.current.click()}
+            className="bg-green-500 hover:bg-green-600 text-white px-8 py-2 rounded-lg"
+          >
+            From Excel
+          </button>
+
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            ref={fileInputRef}
+            onChange={handleExcelUpload}
+            className="hidden"
+          />
+
           <button
-            onClick={() => setFormData(initialForm)}
+            onClick={() => {
+              setFormData(initialForm);
+              setEditIndex(null);
+              localStorage.removeItem("editStudentIndex");
+            }}
             className="bg-red-500 hover:bg-red-600 text-white px-8 py-2 rounded-lg"
           >
             Cancel
           </button>
+
+          <button
+            onClick={() => navigate("/student-view")}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-lg"
+          >
+            View Students
+          </button>
+
         </div>
       </div>
 
@@ -174,7 +367,21 @@ const StudentForm = () => {
       
 
       {/* Student List */}
-      <h2 className="text-2xl font-bold text-[#ff6b00] mb-8 mt-10 ml-54">Student List</h2>
+      {students.length > 0 && (
+      <>
+
+      <div className="flex justify-between items-center mt-10 mb-8 ml-54 mr-20">
+        <h2 className="text-2xl font-bold text-[#ff6b00]">
+          Student List
+        </h2>
+
+        <button
+          onClick={handleAddAll}
+          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg"
+        >
+          Add All
+        </button>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-300 border border-gray-300 ml-54">
@@ -185,6 +392,7 @@ const StudentForm = () => {
               <th className="border p-2 w-20">Roll No</th>
               <th className="border p-2 w-15">Gender</th>
               <th className="border p-2 w-25">Email</th>
+              <th className="border p-2 w-10">DOB</th>
               <th className="border p-2 w-10">Dept</th>
               <th className="border p-2 w-10">Year</th>
               <th className="border p-2 w-10">Sec</th>
@@ -202,6 +410,7 @@ const StudentForm = () => {
                 <td className="border p-2">{student.rollNo}</td>
                 <td className="border p-2">{student.gender}</td>
                 <td className="border p-2">{student.email}</td>
+                <td className="border p-2">{student.dob}</td>
                 <td className="border p-2">{student.dept}</td>
                 <td className="border p-2">{student.year}</td>
                 <td className="border p-2">{student.sec}</td>
@@ -229,6 +438,9 @@ const StudentForm = () => {
           </tbody>
         </table>
       </div>
+
+      </>
+      )}
     </div>
   );
 };

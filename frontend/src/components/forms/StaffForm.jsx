@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import  { useState ,useEffect , useRef } from "react";
+import * as XLSX from "xlsx";
 
 const StaffForm = () => {
   const initialForm = {
@@ -11,8 +13,43 @@ const StaffForm = () => {
   };
 
   const [formData, setFormData] = useState(initialForm);
-  const [staffs, setStaffs] = useState([]);
+  const [staffs, setStaffs] = useState(
+  JSON.parse(localStorage.getItem("workingStaffs")) || []
+);
   const [editIndex, setEditIndex] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const navigate = useNavigate();
+
+  const saveStaffs = (updatedStaffs) => {
+  setStaffs(updatedStaffs);
+
+  localStorage.setItem(
+    "workingStaffs",
+    JSON.stringify(updatedStaffs)
+    );
+  };
+
+  const saveFinalStaffs = (updatedStaffs) => {
+  localStorage.setItem(
+    "finalStaffs",
+    JSON.stringify(updatedStaffs)
+    );
+  };
+
+  useEffect(() => {
+        const index = localStorage.getItem("editStaffIndex");
+  
+        if (index !== null) {
+          const allStaffs =
+            JSON.parse(localStorage.getItem("workingStaffs  ")) || [];
+  
+          if (allStaffs[index]) {
+            setFormData(allStaffs[index]);
+            setEditIndex(Number(index));
+          }
+        }
+      }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,27 +58,99 @@ const StaffForm = () => {
     });
   };
 
-  const handleSubmit = () => {
-    if (editIndex !== null) {
-      const updated = [...staffs];
-      updated[editIndex] = formData;
-      setStaffs(updated);
-      setEditIndex(null);
-    } else {
-      setStaffs([...staffs, formData]);
-    }
 
-    setFormData(initialForm);
+  const handleSubmit = () => {
+  let updatedStaffs ;
+
+  if (editIndex !== null) {
+    updatedStaffs = [...staffs];
+
+    updatedStaffs[editIndex] = formData;
+
+    localStorage.removeItem("editStaffIndex");
+
+    setEditIndex(null);
+  } else {
+    updatedStaffs = [...staffs, formData];
+  }
+
+  saveStaffs(updatedStaffs);
+
+  setFormData(initialForm);
+
   };
 
   const handleEdit = (index) => {
-    setFormData(staffs[index]);
-    setEditIndex(index);
+  localStorage.setItem(
+    "editStudentIndex",
+    index
+  );
+
+  setFormData(staffs[index]);
+  setEditIndex(index);
   };
 
   const handleDelete = (index) => {
-    setStaffs(staffs.filter((_, i) => i !== index));
+  const updatedStaffs = staffs.filter(
+    (_, i) => i !== index
+  );
+
+  saveStaffs(updatedStaffs);
   };
+
+  const handleAddAll = () => {
+  saveFinalStaffs(staffs);
+
+  alert("All Staff Added Successfully");
+  };
+
+  const handleExcelUpload = (e) => {
+      console.log("File selected:");
+    const file = e.target.files[0];
+  
+    if (!file) return;
+  
+    const reader = new FileReader();
+  
+    reader.onload = (evt) => {
+      const data = evt.target.result;
+  
+      const workbook = XLSX.read(data, {
+        type: "binary",
+      });
+  
+      const sheetName = workbook.SheetNames[0];
+  
+      const worksheet = workbook.Sheets[sheetName];
+  
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+  
+      const formattedData = jsonData.map((row) => ({
+        staffid: row["StaffId"] || row.Staffid || "",
+        name: row.Name || "",
+        email: row.Email || "",
+         dob:
+      typeof row.DOB === "number"
+        ? XLSX.SSF.format("dd-mm-yyyy", row.DOB)
+        : row.DOB || "",
+        dept: row.Dept || "",
+        des: row.Des || "",
+      }));
+  
+      const updatedStaffs = [
+    ...staffs,
+    ...formattedData,
+    
+  ];
+  
+  saveStaffs(updatedStaffs);
+  alert("Staff imported successfully");
+    };
+  
+    reader.readAsBinaryString(file);
+  };
+
+
 
   return (
     <div className="min-h-screen bg-[#f8f3ee] p-6">
@@ -61,22 +170,31 @@ const StaffForm = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          <input
-            name="staffid"
-            value={formData.staffid}
-            onChange={handleChange}
-            placeholder="Staff ID"
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Staff ID
+            </label>
+            <input
+              name="staffid"
+              value={formData.staffid}
+              onChange={handleChange}
+              placeholder="Enter Staff ID"
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            />
+          </div>
 
+          <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Staff Name
+          </label>
           <input
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Staff Name"
-            className="h-11 px-4 border border-orange-200 rounded-lg"
+            placeholder="Enter Staff Name"
+            className="h-11 w-full px-4 border border-orange-200 rounded-lg"
           />
-
+        </div>
           
 
           {/* <select
@@ -92,50 +210,70 @@ const StaffForm = () => {
 
           
 
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter Email"
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            />
+          </div>
 
+         <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Date of Birth
+          </label>
           <input
             type="date"
             name="dob"
             value={formData.dob}
             onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
+            className="h-11 w-full px-4 border border-orange-200 rounded-lg"
           />
+        </div>
 
-          <select
-            name="dept"
-            value={formData.dept}
-            onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          >
-            <option value="">Select Department</option>
-            <option>CSE</option>
-            <option>IT</option>
-            <option>EEE</option>
-            <option>MECH</option>
-            <option>CIVIL</option>
-          </select>
+         <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Department
+            </label>
+            <select
+              name="dept"
+              value={formData.dept}
+              onChange={handleChange}
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            >
+              <option value="">Select Department</option>
+              <option>CSE</option>
+              <option>IT</option>
+              <option>EEE</option>
+              <option>MECH</option>
+              <option>CIVIL</option>
+            </select>
+          </div>
 
 
-          <select
-            name="des"
-            value={formData.des}
-            onChange={handleChange}
-            className="h-11 px-4 border border-orange-200 rounded-lg"
-          >
-            <option value="">Select Designation</option>
-            <option>Staff</option>
-            <option>HOD</option>
-            <option>Principal</option>
-            <option>Technician</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Designation
+            </label>
+            <select
+              name="des"
+              value={formData.des}
+              onChange={handleChange}
+              className="h-11 w-full px-4 border border-orange-200 rounded-lg"
+            >
+              <option value="">Select Designation</option>
+              <option>Staff</option>
+              <option>HOD</option>
+              <option>Principal</option>
+              <option>Technician</option>
+            </select>
+          </div>
 
           
 
@@ -150,12 +288,35 @@ const StaffForm = () => {
             {editIndex !== null ? "Update" : "Add"}
           </button>
 
+           <button
+              onClick={() => fileInputRef.current.click()}
+              className="bg-green-500 hover:bg-green-600 text-white px-8 py-2 rounded-lg"
+            >
+              From Excel
+            </button>
+
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              ref={fileInputRef}
+              onChange={handleExcelUpload}
+              className="hidden"
+            />
+
           <button
             onClick={() => setFormData(initialForm)}
             className="bg-red-500 hover:bg-red-600 text-white px-8 py-2 rounded-lg"
           >
             Cancel
           </button>
+
+          <button
+            onClick={() => navigate("/staff-view")}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-lg"
+          >
+            View Staff
+          </button>
+
         </div>
       </div>
 
@@ -164,10 +325,23 @@ const StaffForm = () => {
       </div>
 
       
-
+      {staffs.length > 0 && (
+      <>
       {/* Staff List */}
-      <h2 className="text-2xl font-bold text-[#ff6b00] mb-8 mt-10 ml-54">Staff List</h2>
+      <div className="flex justify-between items-center mt-10 mb-8 ml-54 mr-20">
+        <h2 className="text-2xl font-bold text-[#ff6b00]">
+          Staff List
+        </h2>
 
+        <button
+          onClick={handleAddAll}
+          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg"
+        >
+          Add All
+        </button>
+      </div>
+
+      
       <div className="overflow-x-auto">
         <table className="w-300 border border-gray-300 ml-54">
           <thead className="bg-orange-200">
@@ -217,6 +391,9 @@ const StaffForm = () => {
           </tbody>
         </table>
       </div>
+      </>
+      )}
+
     </div>
   );
 };
